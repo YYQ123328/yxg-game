@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yanxuanguang -show</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(145deg, #f7e8e0 0%, #ecd9d0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .card {
+            max-width: 480px;
+            width: 100%;
+            background: rgba(255, 248, 240, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 30px 24px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .avatar-wrapper {
+            position: relative;
+            width: 180px;
+            height: 220px;
+            margin: 0 auto 18px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(92, 55, 45, 0.15);
+            border: 3px solid #fff8f0;
+        }
+        .avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.3s;
+        }
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            background: #f8f5f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8e0b0b;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #411212;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .tagline {
+            font-size: 14px;
+            color: #5a0a0a;
+            margin-bottom: 22px;
+            font-style: italic;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .info-item {
+            background: #fffcf8;
+            border-radius: 16px;
+            padding: 12px 14px;
+            box-shadow: inset 0 1px 3px rgba(90,60,50,0.05);
+        }
+        .info-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #b71313bb;
+            margin-bottom: 2px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a4d0a;
+        }
+        .desc-box {
+            background: #fffcf8;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            text-align: left;
+            line-height: 1.7;
+            color: #4d362e;
+            font-size: 15px;
+            box-shadow: inset 0 1px 3px rgba(90,60,50,0.05);
+        }
+        .action-btn {
+            background: #b48d7a;
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 14px 36px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(150, 105, 80, 0.25);
+            letter-spacing: 0.5px;
+        }
+        .action-btn:hover {
+            background: #a07b69;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(130, 95, 75, 0.35);
+        }
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+        .mood-text {
+            margin-top: 16px;
+            font-size: 15px;
+            color: #6b5044;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(245, 230, 218, 0.5);
+            border-radius: 99px;
+            padding: 8px 18px;
+        }
+        .footer-note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #bba396;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <!-- ====== 头像区域 ====== -->
+    <div class="avatar-wrapper">
+        <!-- 👇 把你的OC立绘图片路径填到 src 里，比如 "my_oc.png" -->
+        <img id="ocAvatar" src="my_oc.png" alt="OC立绘">
+        <!-- 如果还没图，会显示占位文字 -->
+        <div class="avatar-placeholder" id="placeholderText">✨ 放你的OC立绘 ✨</div>
+    </div>
+
+    <!-- ====== 名字 & 短签 ====== -->
+    <h1 id="ocName">颜旋光</h1>
+    <div class="tagline" id="ocTagline">「 一句属于ta的小标语 」</div>
+
+    <!-- ====== 基本信息两列 ====== -->
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="info-label">🎂 生日</div>
+            <div class="info-value" id="ocBirth">??</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">⚡ 属性</div>
+            <div class="info-value" id="ocAttr">??</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">💖 喜欢</div>
+            <div class="info-value" id="ocLike">??</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">🌙 讨厌</div>
+            <div class="info-value" id="ocDislike">??</div>
+        </div>
+    </div>
+
+    <!-- ====== 简介 ====== -->
+    <div class="desc-box" id="ocDesc">
+        一只非常依赖雪雫大人的吸血鬼
+    </div>
+
+    <!-- ====== 互动按钮 ====== -->
+    <button class="action-btn" id="moodBtn">👋 戳戳ta</button>
+    <button class="btn" id="enterRoomBtn">🚪 进入房间</button>
+    <button class="btn" id="scheduleBtn">📅 日程</button>
+    <button class="btn" id="wardrobeBtn">🧥 衣柜</button>
+    <!-- ====== 心情反馈区 ====== -->
+    <div class="mood-text" id="moodDisplay">轻轻戳一下看看反应～</div>
+
+    <div class="footer-note">❤️ 为你和OC制作</div>
+</div>
+
+<script>
+    // ==========================================
+    // 🎮 这里填写你的OC数据（全部可改）
+    // ==========================================
+    const OC_DATA = {
+        name: '颜旋光',
+        tagline: '「欢迎光临！」',
+        birth: '1月26日',
+        attribute: '温柔 / 神秘',
+        like: '雨天、旧书',
+        dislike: '吵闹的地方',
+        description: '一只厌倦战争后来到人间开店的吸血鬼大公，目前和雪雫甜蜜生活中',
+
+        // ⚠️ 情绪台词库（每次戳随机一条）
+        moods: [
+            '嗯？叫我吗？😊',
+            '今天天气不错',
+            '你来了呀！我等好久了',
+            '…在看什么？',
+            '在看什么？这么入迷？',
+            '要不要一起去散步？',
+            '很高兴？我...遇见你就会这样，情不自禁',
+            '你身上有很好闻的味道☺️',
+        ]
+    };
+
+    // ==========================================
+    // 🖼️ 立绘图片设置
+    //    将你的图片放在同目录下，改下面文件名
+    //    例如：'my_oc.png'
+    //    如果暂时没有图，留空字符串就会显示占位
+    // ==========================================
+    const OC_IMAGE = 'my_oc.png';  // ← 在这里填图片路径，如 'oc_stand.png'
+
+    // ----- 以下代码自动填充，不用改 -----
+    document.getElementById('ocName').textContent = OC_DATA.name;
+    document.getElementById('ocTagline').textContent = OC_DATA.tagline;
+    document.getElementById('ocBirth').textContent = OC_DATA.birth;
+    document.getElementById('ocAttr').textContent = OC_DATA.attribute;
+    document.getElementById('ocLike').textContent = OC_DATA.like;
+    document.getElementById('ocDislike').textContent = OC_DATA.dislike;
+    document.getElementById('ocDesc').textContent = OC_DATA.description;
+
+    const avatarImg = document.getElementById('ocAvatar');
+    const placeholderDiv = document.getElementById('placeholderText');
+
+    if (OC_IMAGE && OC_IMAGE.trim() !== '') {
+        avatarImg.src = OC_IMAGE;
+        avatarImg.style.display = 'block';
+        placeholderDiv.style.display = 'none';
+    } else {
+        avatarImg.style.display = 'none';
+        placeholderDiv.style.display = 'flex';
+    }
+
+    // 戳戳互动
+    const moodDisplay = document.getElementById('moodDisplay');
+    const moodBtn = document.getElementById('moodBtn');
+
+    moodBtn.addEventListener('click', () => {
+        const moods = OC_DATA.moods;
+        const randomIndex = Math.floor(Math.random() * moods.length);
+        moodDisplay.textContent = moods[randomIndex];
+        // 加一点小动画感
+        moodDisplay.style.transition = 'opacity 0.15s';
+        moodDisplay.style.opacity = '0.6';
+        setTimeout(() => { moodDisplay.style.opacity = '1'; }, 120);
+    });
+</script>
+<!-- ====== 房间模块（复制到现有 HTML 的 <body> 末尾） ====== -->
+<style>
+/* 房间样式 */
+.room-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.65);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.room-overlay.active { display: flex; }
+.room-card {
+    background: #fff8f0;
+    border-radius: 28px;
+    padding: 24px;
+    max-width: 460px;
+    width: 90%;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+    text-align: center;
+    position: relative;
+}
+.room-image-container {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    background: #dcc4b8;
+    position: relative;
+}
+.room-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.room-status {
+    font-size: 20px;
+    font-weight: 600;
+    color: #3a2822;
+    margin-bottom: 12px;
+}
+.room-action-area {
+    margin-top: 12px;
+}
+.room-btn {
+    background: #b48d7a;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(150,105,80,0.2);
+    margin: 4px;
+}
+.room-btn:hover { background: #a07b69; transform: translateY(-2px); }
+.room-btn.secondary { background: #8f7163; }
+.close-room {
+    position: absolute;
+    top: 12px; right: 16px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #7a5c4e;
+    background: none;
+    border: none;
+    line-height: 1;
+}
+</style>
+
+<div class="room-overlay" id="roomOverlay">
+    <div class="room-card">
+        <button class="close-room" id="closeRoomBtn">✕</button>
+        <div class="room-image-container">
+            <!-- 三张图片，默认隐藏，由 JS 控制显示 -->
+            <img id="roomImgHome" src="" alt="在家" style="display:none;">
+            <img id="roomImgAway" src="" alt="不在家" style="display:none;">
+            <img id="roomImgInteract" src="" alt="互动" style="display:none;">
+        </div>
+        <div class="room-status" id="roomStatus">🔍 正在查看……</div>
+        <div class="room-action-area">
+            <button class="room-btn" id="roomRefreshBtn">🔄 刷新房间</button>
+            <button class="room-btn secondary" id="roomInteractBtn">👆 戳戳ta</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== 房间配置 =====
+// ！！！请修改下面的图片路径为你自己的图片！！！
+const ROOM_CONFIG = {
+    // 在家时的图片
+    homeImage: 'oc_home.png',       // ← 替换成你的图片文件名
+    // 不在家时的图片
+    awayImage: 'room_empty.png',    // ← 替换成你的图片文件名
+    // 在家且点击“戳戳ta”后的图片
+    interactImage: 'oc_interact.png', // ← 替换成你的图片文件名
+    // 角色名称（用于状态文字）
+    name: '颜旋光',             // ← 改成你的OC名字
+};
+
+// ===== 以下逻辑不用改 =====
+let currentState = 'unknown'; // 'home', 'away', 'interact'
+
+const overlay = document.getElementById('roomOverlay');
+const closeBtn = document.getElementById('closeRoomBtn');
+const refreshBtn = document.getElementById('roomRefreshBtn');
+const interactBtn = document.getElementById('roomInteractBtn');
+const statusEl = document.getElementById('roomStatus');
+const imgHome = document.getElementById('roomImgHome');
+const imgAway = document.getElementById('roomImgAway');
+const imgInteract = document.getElementById('roomImgInteract');
+
+// 设置图片源
+imgHome.src = ROOM_CONFIG.homeImage;
+imgAway.src = ROOM_CONFIG.awayImage;
+imgInteract.src = ROOM_CONFIG.interactImage;
+
+function hideAllImages() {
+    imgHome.style.display = 'none';
+    imgAway.style.display = 'none';
+    imgInteract.style.display = 'none';
+}
+
+function setState(state) {
+    hideAllImages();
+    currentState = state;
+    switch(state) {
+        case 'home':
+            imgHome.style.display = 'block';
+            statusEl.textContent = `${ROOM_CONFIG.name} 在家哦`;
+            interactBtn.style.display = 'inline-block';
+            break;
+        case 'away':
+            imgAway.style.display = 'block';
+            statusEl.textContent = `${ROOM_CONFIG.name} 出门了……`;
+            interactBtn.style.display = 'none';
+            break;
+        case 'interact':
+            imgInteract.style.display = 'block';
+            statusEl.textContent = `${ROOM_CONFIG.name} 被你戳了一下！`;
+            interactBtn.style.display = 'none'; // 戳完后隐藏按钮，避免重复
+            break;
+    }
+}
+
+function refreshRoom() {
+    // 50%概率在家
+    const isHome = Math.random() < 0.5;
+    setState(isHome ? 'home' : 'away');
+}
+
+// 打开房间
+function openRoom() {
+    overlay.classList.add('active');
+    refreshRoom();
+}
+
+// 关闭房间
+function closeRoom() {
+    overlay.classList.remove('active');
+}
+
+// 绑定事件
+closeBtn.addEventListener('click', closeRoom);
+overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeRoom();
+});
+refreshBtn.addEventListener('click', refreshRoom);
+interactBtn.addEventListener('click', function() {
+    if (currentState === 'home') {
+        setState('interact');
+    }
+});
+
+// ===== 暴露 openRoom 函数供首页按钮调用 =====
+window.openRoom = openRoom;
+
+// 如果你的首页按钮 ID 是 "enterRoomBtn"，取消注释下面这行：
+// document.getElementById('enterRoomBtn').addEventListener('click', openRoom);
+</script>
+<script>
+// 如果已经存在 openRoom 函数（来自房间模块），就直接绑定按钮
+(function() {
+    var btn = document.getElementById('enterRoomBtn');
+    if (btn && typeof window.openRoom === 'function') {
+        btn.addEventListener('click', window.openRoom);
+    } else {
+        // 如果还没有房间模块，给一个提示
+        console.warn('房间模块未加载，请先添加房间模块代码。');
+    }
+})();
+</script>
+<!-- ====== 每日生活表模块 ====== -->
+<style>
+/* 日程弹窗样式 */
+.schedule-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.65);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 998;
+}
+.schedule-overlay.active { display: flex; }
+.schedule-card {
+    background: #fff8f0;
+    border-radius: 28px;
+    padding: 28px 24px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+    text-align: center;
+    position: relative;
+}
+.schedule-time {
+    font-size: 18px;
+    color: #8f7163;
+    margin-bottom: 6px;
+}
+.schedule-current-activity {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3a2822;
+    margin-bottom: 20px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.invite-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+.invite-btn {
+    background: #b48d7a;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(150,105,80,0.15);
+}
+.invite-btn:hover { background: #a07b69; transform: translateY(-2px); }
+.invite-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+.schedule-close {
+    position: absolute;
+    top: 12px; right: 16px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #7a5c4e;
+    background: none;
+    border: none;
+    line-height: 1;
+}
+
+/* 反应弹窗（大头立绘 + 对话） */
+.reaction-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.reaction-overlay.active { display: flex; }
+.reaction-card {
+    background: #fffcf8;
+    border-radius: 28px;
+    padding: 24px 28px 28px;
+    max-width: 360px;
+    width: 85%;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    animation: popIn 0.25s ease-out;
+}
+@keyframes popIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.reaction-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 14px;
+    border: 4px solid #f0ded0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    display: block;
+    background: #dcc4b8;
+}
+.reaction-dialogue {
+    font-size: 17px;
+    color: #3a2822;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    min-height: 52px;
+    background: #faf3ec;
+    border-radius: 20px;
+    padding: 14px 18px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+.reaction-close-btn {
+    background: #8f7163;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.reaction-close-btn:hover { background: #7a5c4e; }
+</style>
+
+<!-- 日程弹窗 -->
+<div class="schedule-overlay" id="scheduleOverlay">
+    <div class="schedule-card">
+        <button class="schedule-close" id="scheduleCloseBtn">✕</button>
+        <div class="schedule-time" id="scheduleTimeDisplay">--:--</div>
+        <div class="schedule-current-activity" id="scheduleActivityDisplay">加载中…</div>
+        <div class="invite-buttons" id="inviteButtonsContainer">
+            <!-- 按钮由 JS 动态生成 -->
+        </div>
+        <div style="font-size:13px;color:#bba396;margin-top:8px;">💡 试试在合适的时间邀请ta</div>
+    </div>
+</div>
+
+<!-- 反应弹窗（大头+对话） -->
+<div class="reaction-overlay" id="reactionOverlay">
+    <div class="reaction-card">
+        <img class="reaction-avatar" id="reactionAvatar" src="" alt="OC大头">
+        <div class="reaction-dialogue" id="reactionDialogue">……</div>
+        <button class="reaction-close-btn" id="reactionCloseBtn">知道了</button>
+    </div>
+</div>
+
+<script>
+// ================================================================
+// 🎮 配置区 —— 修改这里的数据以适应你的OC
+// ================================================================
+
+const SCHEDULE_CONFIG = {
+    // OC 名字（用于对话中称呼）
+    name: '你的OC名字',
+
+    // 大头立绘图片路径（用于反应弹窗）
+    headshotImage: 'oc_head.png',   // ← 替换成你的OC大头照
+
+    // 日程表：键为小时（0~23），值为活动描述
+    schedule: {
+        0: '正在睡觉💤',
+        1: '正在睡觉💤',
+        2: '正在睡觉💤',
+        3: '正在睡觉💤',
+        4: '正在睡觉💤',
+        5: '正在睡觉💤',
+        6: '刚醒，还在发呆😴',
+        7: '洗漱准备出门',
+        8: '吃早餐🥐',
+        9: '在公园散步🚶',
+        10: '在图书馆看书📚',
+        11: '在咖啡馆写东西☕',
+        12: '吃午饭🍜',
+        13: '午休小睡😪',
+        14: '在工作室画画🎨',
+        15: '听音乐放松🎵',
+        16: '在超市购物🛒',
+        17: '准备晚餐🍳',
+        18: '吃晚饭🍝',
+        19: '看电视📺',
+        20: '和你一起看电影🎬',  // 默认活动可能包含电影
+        21: '在阳台吹风🌙',
+        22: '洗澡准备睡觉🛁',
+        23: '躺在床上玩手机📱'
+    },
+
+    // 邀请类型对应的反应（根据当前活动返回不同台词）
+    // 格式：邀请类型 -> 函数(currentActivity) -> { dialogue: '台词', ... }
+    // 如果不匹配，会使用 fallback
+    reactions: {
+        '吃饭': function(activity) {
+            // 根据活动判断是否适合吃饭
+            if (activity.includes('吃饭') || activity.includes('早餐') || activity.includes('午餐') || activity.includes('晚餐')) {
+                return { dialogue: '「正好我也在吃，一起吧！🍽️」' };
+            } else if (activity.includes('睡觉') || activity.includes('睡')) {
+                return { dialogue: '「是饿了吗？我现在去做，不过我可能陪完你吃饭之后要再睡一会，想要一起吗」' };
+            } else if (activity.includes('电影') || activity.includes('电视')) {
+                return { dialogue: '「好啊，边看边吃？我去适合接着食物残渣的垫子」' };
+            } else {
+                return { dialogue: '「现在不太饿，如果你饿了的话我去做饭，想吃什么？」' };
+            }
+        },
+        '睡觉': function(activity) {
+            if (activity.includes('睡觉') || activity.includes('睡')) {
+                return { dialogue: '「我已经在睡了…zzZ…是做噩梦醒了吗？我来抱着你睡吧」' };
+            } else if (activity.includes('晚上') || activity.includes('洗澡') || activity.includes('手机')) {
+                return { dialogue: '「是该睡了…好吧，你陪我一起躺会儿？」' };
+            } else if (activity.includes('电影') || activity.includes('电视')) {
+                return { dialogue: '「困了？好的我现在去关下电视，坚持一会。雫雫洗漱了吗？」' };
+            } else {
+                return { dialogue: '「现在对我来说还早，雫雫，我可以先哄你入睡」' };
+            }
+        },
+        '休息': function(activity) {
+            if (activity.includes('睡觉') || activity.includes('睡')) {
+                return { dialogue: '「我在休息了宝宝zzZ」' };
+            } else if (activity.includes('散步') || activity.includes('走路') || activity.includes('购物')) {
+                return { dialogue: '「会累吗？要不要休息一会？」' };
+            } else if (activity.includes('电影') || activity.includes('电视')) {
+                return { dialogue: '「来一起看吧？想看什么？我去找碟片」' };
+            } else {
+                return { dialogue: '「嗯…休息一下也好，要不要也喝点什么？抹茶？果茶？还是乳茶？」' };
+            }
+        },
+        '一起看电影': function(activity) {
+            if (activity.includes('电影') || activity.includes('电视')) {
+                return { dialogue: '「我正在看呢，这一集剧情很不错，要一起吗」' };
+            } else if (activity.includes('睡觉') || activity.includes('睡')) {
+                return { dialogue: '「现在好困…明天再看好不好🥺」' };
+            } else if (activity.includes('吃饭') || activity.includes('午餐') || activity.includes('晚餐')) {
+                return { dialogue: '「好啊 不过我可能要一边吃一边陪你了 你要不要也吃点零食？」' };
+            } else if (activity.includes('散步') || activity.includes('外面')) {
+                return { dialogue: '「在外面呢…回去再陪你看电影吧」' };
+            } else {
+                return { dialogue: '「好啊！最近正好有一部想看的，你陪我看吧✨」' };
+            }
+        }
+    },
+
+    // 当邀请类型没有对应反应时的默认台词
+    fallbackReaction: '「嗯…让我想想…好啊，只要雫雫想做都可以」'
+};
+
+// ================================================================
+// 🛠️ 以下逻辑无需修改（除非你想定制行为）
+// ================================================================
+
+// 获取当前小时
+function getCurrentHour() {
+    return new Date().getHours();
+}
+
+// 格式化时间显示
+function formatTime(hour) {
+    const now = new Date();
+    const h = hour.toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+}
+
+// 根据小时获取活动
+function getActivityForHour(hour) {
+    return SCHEDULE_CONFIG.schedule[hour] || '在做一些神秘的事情…🔮';
+}
+
+// 更新日程面板
+function updateSchedulePanel() {
+    const hour = getCurrentHour();
+    document.getElementById('scheduleTimeDisplay').textContent = `⏰ ${formatTime(hour)}`;
+    const activity = getActivityForHour(hour);
+    document.getElementById('scheduleActivityDisplay').textContent = activity;
+
+    // 生成邀请按钮
+    const container = document.getElementById('inviteButtonsContainer');
+    container.innerHTML = '';
+    const inviteTypes = ['吃饭', '睡觉', '休息', '一起看电影'];
+    inviteTypes.forEach(type => {
+        const btn = document.createElement('button');
+        btn.className = 'invite-btn';
+        btn.textContent = type;
+        btn.addEventListener('click', function() {
+            handleInvite(type, activity);
+        });
+        container.appendChild(btn);
+    });
+}
+
+// 处理邀请
+function handleInvite(inviteType, currentActivity) {
+    const reactionFunc = SCHEDULE_CONFIG.reactions[inviteType];
+    let result;
+    if (reactionFunc) {
+        result = reactionFunc(currentActivity);
+    } else {
+        result = { dialogue: SCHEDULE_CONFIG.fallbackReaction };
+    }
+    // 显示反应弹窗
+    showReaction(result.dialogue);
+}
+
+// 显示反应弹窗
+function showReaction(dialogue) {
+    const avatar = document.getElementById('reactionAvatar');
+    // 设置大头立绘
+    if (SCHEDULE_CONFIG.headshotImage && SCHEDULE_CONFIG.headshotImage.trim() !== '') {
+        avatar.src = SCHEDULE_CONFIG.headshotImage;
+        avatar.style.display = 'block';
+    } else {
+        avatar.style.display = 'none';
+    }
+    document.getElementById('reactionDialogue').textContent = dialogue;
+    document.getElementById('reactionOverlay').classList.add('active');
+}
+
+// 关闭反应弹窗
+document.getElementById('reactionCloseBtn').addEventListener('click', function() {
+    document.getElementById('reactionOverlay').classList.remove('active');
+});
+document.getElementById('reactionOverlay').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.remove('active');
+    }
+});
+
+// 日程弹窗控制
+function openSchedule() {
+    updateSchedulePanel();
+    document.getElementById('scheduleOverlay').classList.add('active');
+}
+function closeSchedule() {
+    document.getElementById('scheduleOverlay').classList.remove('active');
+}
+document.getElementById('scheduleCloseBtn').addEventListener('click', closeSchedule);
+document.getElementById('scheduleOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSchedule();
+});
+
+// 暴露函数供按钮调用
+window.openSchedule = openSchedule;
+
+// 如果你的首页已有“日程”按钮，取消注释下面这行（并将按钮ID改为你的实际ID）：
+document.getElementById('scheduleBtn').addEventListener('click', openSchedule);
+</script>
+<!-- ====== 衣柜界面模块 ====== -->
+<style>
+/* 衣柜界面全屏覆盖 */
+.wardrobe-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #2a1f1a; /* 深色基底 */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 997;
+    flex-direction: column;
+}
+.wardrobe-overlay.active { display: flex; }
+
+/* 衣柜内部场景卡片 */
+.wardrobe-scene {
+    width: 94%;
+    height: 82vh;
+    position: relative;
+    background: #3d2b24; /* 背景底色 */
+}
+
+/* 衣柜背景图（铺满） */
+.wardrobe-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* OC 立绘（居中） */
+.wardrobe-character {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 72%;
+    width: auto;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
+    transition: opacity 0.3s;
+    z-index: 2;
+}
+
+/* 换装按钮区域（底部） */
+.wardrobe-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    z-index: 3;
+    padding: 0 16px;
+    flex-wrap: wrap;
+}
+.wardrobe-btn {
+    background: rgba(255,248,240,0.85);
+    backdrop-filter: blur(4px);
+    color: #f8f0ed;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.wardrobe-btn:hover {
+    background: #fff8f0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+.wardrobe-btn.back {
+    background: rgba(143,113,99,0.85);
+    color: white;
+}
+.wardrobe-btn.back:hover { background: #7a5c4e; }
+
+/* 占位提示（还没画素材时显示） */
+.wardrobe-placeholder {
+    position: absolute;
+    bottom: 70px;
+    left: 0; right: 0;
+    text-align: center;
+    color: rgba(255,248,240,0.6);
+    font-size: 15px;
+    z-index: 2;
+    pointer-events: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+</style>
+<!-- ====== 换装衣柜模块（分部件） ====== -->
+<style>
+/* 全屏衣柜 */
+.wardrobe-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #dfcbc2;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 997;
+    flex-direction: column;
+}
+.wardrobe-overlay.active { display: flex; }
+
+.wardrobe-scene {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: #4d3025;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* 左侧预览区 */
+.preview-area {
+    flex: 0 0 auto;
+    width: 280px;
+    height: 380px;
+    position: relative;
+    background: #fbd8c9;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.preview-area img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated; /* 保持像素清晰 */
+}
+
+/* 右侧选择面板 */
+.selection-panel {
+    flex: 0 0 260px;
+    background: rgba(255,248,240,0.12);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 18px 16px;
+    color: #fff8f0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.selection-panel h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    text-align: center;
+    color: #f0ded0;
+    border-bottom: 1px solid rgba(255,248,240,0.2);
+    padding-bottom: 8px;
+}
+.category-group {
+    margin-bottom: 14px;
+}
+.category-label {
+    font-size: 13px;
+    color: #d4bfb0;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.item-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.item-btn {
+    background: rgba(255,248,240,0.15);
+    border: 1px solid rgba(255,248,240,0.2);
+    color: #fff8f0;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.item-btn:hover {
+    background: rgba(255,248,240,0.3);
+    transform: translateY(-1px);
+}
+.item-btn.active {
+    background: #b48d7a;
+    border-color: #b48d7a;
+    color: white;
+}
+
+/* 底部导航 */
+.bottom-nav {
+    position: absolute;
+    bottom: 20px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    z-index: 10;
+}
+.nav-btn {
+    background: rgba(255,248,240,0.85);
+    backdrop-filter: blur(4px);
+    color: #3a2822;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.nav-btn:hover {
+    background: #fff8f0;
+    transform: translateY(-2px);
+}
+.nav-btn.back {
+    background: rgba(143,113,99,0.85);
+    color: white;
+}
+.nav-btn.back:hover { background: #7a5c4e; }
+</style>
+
+<div class="wardrobe-overlay" id="wardrobeOverlay">
+    <div class="wardrobe-scene">
+        <!-- 左侧预览区 -->
+        <div class="preview-area">
+            <img id="layer-body" src="" alt="素体">
+            <img id="layer-top" src="" alt="上衣" style="display:none;">
+            <img id="layer-bottom" src="" alt="下装" style="display:none;">
+            <img id="layer-hat" src="" alt="帽子" style="display:none;">
+            <img id="layer-shoes" src="" alt="鞋子" style="display:none;">
+        </div>
+
+        <!-- 右侧选择面板 -->
+        <div class="selection-panel" id="selectionPanel">
+            <h3>🧥 衣柜</h3>
+            <!-- 各分类将由 JS 动态生成 -->
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="bottom-nav">
+            <button class="nav-btn" id="randomOutfitBtn">🎲 随机搭配</button>
+            <button class="nav-btn back" id="wardrobeBackBtn">🏠 返回首页</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ================================================================
+// 🎮 配置区 —— 在这里填写你的图片文件名
+// ================================================================
+
+const CLOTHING_CONFIG = {
+    // 素体（必填）
+    body: 'body.png',
+
+    // 上衣（包括裙子，coversBottom: true 表示连体衣，会隐藏下装）
+    tops: [
+        { id: 'top1', name: '上衣1', file: 'top1.png', coversBottom: false },
+        { id: 'top2', name: '上衣2', file: 'top2.png', coversBottom: false },
+        { id: 'dress1', name: '裙子1', file: 'dress1.png', coversBottom: true },
+        { id: 'dress2', name: '裙子2', file: 'dress2.png', coversBottom: true },
+    ],
+
+    // 下装（裤子）
+    bottoms: [
+        { id: 'pants1', name: '裤子1', file: 'pants1.png' },
+        { id: 'pants2', name: '裤子2', file: 'pants2.png' },
+    ],
+
+    // 帽子
+    hats: [
+        { id: 'hat1', name: '帽子1', file: 'hat1.png' },
+        { id: 'hat2', name: '帽子2', file: 'hat2.png' },
+    ],
+
+    // 鞋子
+    shoes: [
+        { id: 'shoe1', name: '鞋子', file: 'shoe1.png' },
+    ],
+};
+
+// ================================================================
+// 🛠️ 以下逻辑不用改（除非你想定制行为）
+// ================================================================
+
+// 当前选中的部件ID
+let current = {
+    top: null,
+    bottom: null,
+    hat: null,
+    shoe: null,
+};
+
+// DOM 元素
+const layers = {
+    body: document.getElementById('layer-body'),
+    top: document.getElementById('layer-top'),
+    bottom: document.getElementById('layer-bottom'),
+    hat: document.getElementById('layer-hat'),
+    shoes: document.getElementById('layer-shoes'),
+};
+
+// 设置素体
+layers.body.src = CLOTHING_CONFIG.body;
+
+// 生成选择面板
+function buildPanel() {
+    const panel = document.getElementById('selectionPanel');
+    panel.innerHTML = '<h3>🧥 衣柜</h3>';
+
+    // 上衣分类
+    addCategory(panel, '上衣 / 裙子', CLOTHING_CONFIG.tops, 'top', (item) => {
+        return item.coversBottom ? '👗 ' + item.name : '👕 ' + item.name;
+    });
+
+    // 下装分类
+    addCategory(panel, '下装', CLOTHING_CONFIG.bottoms, 'bottom');
+
+    // 帽子分类
+    addCategory(panel, '帽子', CLOTHING_CONFIG.hats, 'hat');
+
+    // 鞋子分类
+    addCategory(panel, '鞋子', CLOTHING_CONFIG.shoes, 'shoe');
+}
+
+function addCategory(container, label, items, type, labelFormatter) {
+    if (!items || items.length === 0) return;
+    const group = document.createElement('div');
+    group.className = 'category-group';
+    const title = document.createElement('div');
+    title.className = 'category-label';
+    title.textContent = label;
+    group.appendChild(title);
+
+    const btnWrap = document.createElement('div');
+    btnWrap.className = 'item-buttons';
+
+    items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'item-btn';
+        btn.textContent = labelFormatter ? labelFormatter(item) : item.name;
+        btn.dataset.type = type;
+        btn.dataset.id = item.id;
+        btn.addEventListener('click', function() {
+            selectItem(type, item.id);
+        });
+        btnWrap.appendChild(btn);
+    });
+
+    group.appendChild(btnWrap);
+    container.appendChild(group);
+}
+
+// 选择部件
+function selectItem(type, id) {
+    // 清除该分类所有按钮的高亮
+    document.querySelectorAll(`.item-btn[data-type="${type}"]`).forEach(b => b.classList.remove('active'));
+
+    // 高亮当前按钮
+    const targetBtn = document.querySelector(`.item-btn[data-type="${type}"][data-id="${id}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    // 更新 current
+    current[type] = id;
+
+    // 更新图层
+    updateLayers();
+}
+
+// 更新所有图层显示
+function updateLayers() {
+    // 上衣
+    const topItem = CLOTHING_CONFIG.tops.find(t => t.id === current.top);
+    if (topItem) {
+        layers.top.src = topItem.file;
+        layers.top.style.display = 'block';
+        // 如果是裙子（coversBottom），隐藏下装层
+        if (topItem.coversBottom) {
+            layers.bottom.style.display = 'none';
+        } else {
+            // 如果当前有下装，显示
+            const bottomItem = CLOTHING_CONFIG.bottoms.find(b => b.id === current.bottom);
+            layers.bottom.style.display = bottomItem ? 'block' : 'none';
+        }
+    } else {
+        layers.top.style.display = 'none';
+        // 没有上衣时，下装可以显示
+        const bottomItem = CLOTHING_CONFIG.bottoms.find(b => b.id === current.bottom);
+        layers.bottom.style.display = bottomItem ? 'block' : 'none';
+    }
+
+    // 下装（如果上衣是裙子，下装已经被隐藏，但这里仍设置src以备后续切换上衣时恢复）
+    const bottomItem = CLOTHING_CONFIG.bottoms.find(b => b.id === current.bottom);
+    if (bottomItem) {
+        layers.bottom.src = bottomItem.file;
+        // 注意：显示与否由上衣控制，这里只设src
+        if (!topItem || !topItem.coversBottom) {
+            layers.bottom.style.display = 'block';
+        }
+    } else {
+        layers.bottom.style.display = 'none';
+    }
+
+    // 帽子
+    const hatItem = CLOTHING_CONFIG.hats.find(h => h.id === current.hat);
+    if (hatItem) {
+        layers.hat.src = hatItem.file;
+        layers.hat.style.display = 'block';
+    } else {
+        layers.hat.style.display = 'none';
+    }
+
+    // 鞋子
+    const shoeItem = CLOTHING_CONFIG.shoes.find(s => s.id === current.shoe);
+    if (shoeItem) {
+        layers.shoes.src = shoeItem.file;
+        layers.shoes.style.display = 'block';
+    } else {
+        layers.shoes.style.display = 'none';
+    }
+}
+
+// 随机搭配
+function randomOutfit() {
+    // 随机选上衣
+    const randTop = CLOTHING_CONFIG.tops[Math.floor(Math.random() * CLOTHING_CONFIG.tops.length)];
+    selectItem('top', randTop.id);
+
+    // 如果上衣不是裙子，随机选下装
+    if (!randTop.coversBottom && CLOTHING_CONFIG.bottoms.length > 0) {
+        const randBottom = CLOTHING_CONFIG.bottoms[Math.floor(Math.random() * CLOTHING_CONFIG.bottoms.length)];
+        selectItem('bottom', randBottom.id);
+    } else {
+        // 如果是裙子，清除下装选择
+        current.bottom = null;
+        document.querySelectorAll('.item-btn[data-type="bottom"]').forEach(b => b.classList.remove('active'));
+        layers.bottom.style.display = 'none';
+    }
+
+    // 随机选帽子
+    if (CLOTHING_CONFIG.hats.length > 0) {
+        const randHat = CLOTHING_CONFIG.hats[Math.floor(Math.random() * CLOTHING_CONFIG.hats.length)];
+        selectItem('hat', randHat.id);
+    }
+
+    // 随机选鞋子
+    if (CLOTHING_CONFIG.shoes.length > 0) {
+        const randShoe = CLOTHING_CONFIG.shoes[Math.floor(Math.random() * CLOTHING_CONFIG.shoes.length)];
+        selectItem('shoe', randShoe.id);
+    }
+}
+
+// 打开/关闭衣柜
+function openWardrobe() {
+    document.getElementById('wardrobeOverlay').classList.add('active');
+    // 如果没有默认搭配，随机一套
+    if (!current.top) randomOutfit();
+}
+function closeWardrobe() {
+    document.getElementById('wardrobeOverlay').classList.remove('active');
+}
+
+// 绑定事件
+document.getElementById('wardrobeBackBtn').addEventListener('click', closeWardrobe);
+document.getElementById('randomOutfitBtn').addEventListener('click', randomOutfit);
+
+// 暴露函数
+window.openWardrobe = openWardrobe;
+
+// 初始化面板
+buildPanel();
+
+// 如果你的首页已有“🧥 衣柜”按钮，取消注释下面这行：
+document.getElementById('wardrobeBtn').addEventListener('click', openWardrobe);
+</script>
+</body>
+</html>
