@@ -145,6 +145,10 @@
             font-size: 13px;
             color: #bba396;
         }
+
+.btn-highlight:active {
+    transform: scale(0.95);
+}
     </style>
 </head>
 <body>
@@ -189,9 +193,16 @@
 
     <!-- ====== 互动按钮 ====== -->
     <button class="action-btn" id="moodBtn">👋 戳戳ta</button>
+    <!-- 把这个按钮放在其他按钮旁边，比如钓鱼、做饭下面 -->
+
+</button>
     <button class="btn" id="enterRoomBtn">🚪 进入房间</button>
     <button class="btn" id="scheduleBtn">📅 日程</button>
     <button class="btn" id="wardrobeBtn">🧥 衣柜</button>
+    <button class="btn" id="fishingBtn">🎣 钓鱼</button>
+    <button class="btn" id="cookingBtn">🍳 做饭</button>
+    <button class="btn" id="shopBtn">🏪 商店</button>
+    <button class="btn" id="robBtn">🫰 打劫</button>
     <!-- ====== 心情反馈区 ====== -->
     <div class="mood-text" id="moodDisplay">轻轻戳一下看看反应～</div>
 
@@ -1303,6 +1314,883 @@ buildPanel();
 
 // 如果你的首页已有“🧥 衣柜”按钮，取消注释下面这行：
 document.getElementById('wardrobeBtn').addEventListener('click', openWardrobe);
+</script>
+<!-- ====== 钓鱼+做饭+商店 联动模块（统一背包） ====== -->
+<style>
+/* ===== 通用全屏页面 ===== */
+.full-page {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 995;
+    background: #1a2e3a;
+}
+.full-page.active { display: flex; }
+.page-content {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.page-btn {
+    background: rgba(255,248,240,0.9);
+    backdrop-filter: blur(4px);
+    color: #2a1f1a;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    margin: 6px;
+}
+.page-btn:hover { transform: translateY(-2px); }
+.page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.page-btn.back { background: rgba(143,113,99,0.85); color: white; }
+
+/* ===== 钓鱼页面 ===== */
+#fishingPage .bg-layer {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain; z-index: 0;
+}
+.fishing-ui {
+    position: relative; z-index: 1;
+    text-align: center; color: white;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+.fishing-status { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.fishing-result { font-size: 18px; margin-bottom: 16px; min-height: 60px; }
+.fishing-controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ===== 做饭页面 ===== */
+#cookingPage .bg-layer {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain; z-index: 0;
+}
+.cooking-ui {
+    position: relative; z-index: 1;
+    text-align: center; color: white;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    width: 90%; max-width: 450px;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(6px);
+    border-radius: 24px; padding: 20px;
+}
+.cooking-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+.cooking-backpack {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 12px; min-height: 50px;
+}
+.backpack-item {
+    background: rgba(255,255,255,0.2); border-radius: 12px;
+    padding: 6px 12px; font-size: 14px; cursor: pointer;
+    transition: 0.2s; border: 2px solid transparent;
+}
+.backpack-item:hover { background: rgba(255,255,255,0.35); }
+.backpack-item.selected { border-color: #ffd700; background: rgba(255,215,0,0.3); }
+.cooking-pot {
+    min-height: 60px; background: rgba(0,0,0,0.2);
+    border-radius: 16px; padding: 10px; margin-bottom: 12px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; align-items: center;
+}
+.pot-ingredient {
+    background: rgba(255,255,255,0.15); border-radius: 8px;
+    padding: 4px 10px; font-size: 13px;
+}
+.cooking-result { font-size: 16px; min-height: 40px; margin-bottom: 12px; }
+.cooking-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* ===== 商店页面 ===== */
+#shopPage .bg-layer {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain; z-index: 0;
+}
+.shop-ui {
+    position: relative; z-index: 1;
+    width: 92%; max-width: 440px;
+    background: rgba(30,20,15,0.88); backdrop-filter: blur(8px);
+    border-radius: 24px; padding: 20px; color: white;
+    text-align: center; max-height: 80vh; overflow-y: auto;
+}
+.shop-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.shop-gold { font-size: 18px; margin-bottom: 14px; color: #ffd700; }
+.shop-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.shop-tab {
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    border-radius: 999px; padding: 6px 18px; font-size: 14px; cursor: pointer;
+}
+.shop-tab.active { background: #b48d7a; }
+.shop-grid { display: flex; flex-direction: column; gap: 8px; }
+.shop-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px;
+}
+.shop-item-info { display: flex; align-items: center; gap: 10px; }
+.shop-item-icon { font-size: 28px; width: 36px; text-align: center; }
+.shop-item-name { font-weight: 600; font-size: 15px; }
+.shop-item-price { font-size: 13px; color: #ffd700; }
+.shop-buy-btn {
+    background: #4CAF50; color: white; border: none;
+    border-radius: 999px; padding: 6px 16px; font-size: 13px; cursor: pointer;
+}
+.shop-buy-btn:hover { background: #388E3C; }
+.shop-buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.shop-sell-btn {
+    background: #FF9800; color: white; border: none;
+    border-radius: 999px; padding: 6px 16px; font-size: 13px; cursor: pointer;
+}
+.shop-sell-btn:hover { background: #F57C00; }
+
+/* ===== 血量条 ===== */
+.hp-bar-container {
+    position: fixed; top: 10px; left: 10px; z-index: 990;
+    display: flex; gap: 20px;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    border-radius: 16px; padding: 8px 16px; color: white; font-size: 14px;
+}
+.hp-bar { display: flex; align-items: center; gap: 6px; }
+.hp-fill { width: 80px; height: 12px; background: #333; border-radius: 6px; overflow: hidden; }
+.hp-fill-inner { height: 100%; border-radius: 6px; transition: width 0.3s; }
+.hp-player .hp-fill-inner { background: #4CAF50; }
+.hp-oc .hp-fill-inner { background: #FF9800; }
+
+/* ===== 金币条 ===== */
+.gold-bar {
+    position: fixed; top: 10px; right: 10px; z-index: 991;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    border-radius: 16px; padding: 8px 16px;
+    color: #ffd700; font-size: 16px; font-weight: 600;
+}
+
+/* ===== 背包弹窗 ===== */
+.backpack-popup {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(30,20,15,0.95); backdrop-filter: blur(8px);
+    border-radius: 24px; padding: 24px; color: white;
+    z-index: 999; display: none; max-width: 320px; width: 80%; text-align: center;
+}
+.backpack-popup.active { display: block; }
+.backpack-popup h3 { margin-bottom: 12px; }
+.backpack-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+.backpack-entry {
+    display: flex; justify-content: space-between;
+    padding: 4px 8px; background: rgba(255,255,255,0.1); border-radius: 8px;
+}
+</style>
+
+<!-- ===== 血量条 ===== -->
+<div class="hp-bar-container" id="hpBar">
+    <div class="hp-bar hp-player">
+        <span>🧑 你</span>
+        <div class="hp-fill"><div class="hp-fill-inner" id="playerHpFill" style="width:100%"></div></div>
+        <span id="playerHpText">100</span>
+    </div>
+    <div class="hp-bar hp-oc">
+        <span>🐱 颜旋光</span>
+        <div class="hp-fill"><div class="hp-fill-inner" id="ocHpFill" style="width:100%"></div></div>
+        <span id="ocHpText">100</span>
+    </div>
+</div>
+
+<!-- ===== 金币条 ===== -->
+<div class="gold-bar" id="goldBar">💰 0</div>
+
+<!-- ===== 钓鱼页面 ===== -->
+<div class="full-page" id="fishingPage">
+    <div class="page-content">
+        <img class="bg-layer" id="fishingBg" src="" alt="钓鱼背景">
+        <div class="fishing-ui">
+            <div class="fishing-status" id="fishStatus">🎣 准备钓鱼</div>
+            <div class="fishing-result" id="fishResult">点击抛竿开始</div>
+            <div class="fishing-controls">
+                <button class="page-btn" id="castBtn">🎣 抛竿</button>
+                <button class="page-btn" id="showFishBackpackBtn">🎒 背包</button>
+                <button class="page-btn back" id="fishingToHomeBtn">🏠 返回</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 做饭页面 ===== -->
+<div class="full-page" id="cookingPage">
+    <div class="page-content">
+        <img class="bg-layer" id="cookingBg" src="" alt="做饭背景">
+        <div class="cooking-ui">
+            <div class="cooking-title">🍳 厨房</div>
+            <div style="margin-bottom:8px; font-size:14px;">从背包选择食材放入锅中</div>
+            <div class="cooking-backpack" id="cookingBackpack"></div>
+            <div class="cooking-pot" id="cookingPot"><span style="color:rgba(255,255,255,0.4);">🫕 锅是空的</span></div>
+            <div class="cooking-result" id="cookResult"></div>
+            <div class="cooking-actions">
+                <button class="page-btn" id="cookBtn">🔥 烹饪</button>
+                <button class="page-btn" id="eatSelfBtn">🍽️ 自己吃</button>
+                <button class="page-btn" id="feedOcBtn">🥄 喂颜旋光</button>
+                <button class="page-btn back" id="cookingToHomeBtn">🏠 返回</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 商店页面 ===== -->
+<div class="full-page" id="shopPage">
+    <div class="page-content">
+        <img class="bg-layer" id="shopBg" src="" alt="商店背景">
+        <div class="shop-ui">
+            <div class="shop-title">🏪 商店</div>
+            <div class="shop-gold" id="shopGoldDisplay">💰 金币：0</div>
+            <div class="shop-tabs">
+                <button class="shop-tab active" data-tab="buy">🛒 购买</button>
+                <button class="shop-tab" data-tab="sell">💰 出售</button>
+            </div>
+            <div class="shop-grid" id="shopGrid"></div>
+            <button class="page-btn back" style="margin-top:14px;" id="shopToHomeBtn">🏠 返回</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 背包弹窗 ===== -->
+<div class="backpack-popup" id="backpackPopup">
+    <h3>🎒 背包</h3>
+    <div class="backpack-list" id="backpackList"></div>
+    <button class="page-btn" style="margin-top:12px;" id="closeBackpackBtn">关闭</button>
+</div>
+
+<script>
+// ================================================================
+// 🎮 全局配置 —— 所有数据都在这里改
+// ================================================================
+
+// ---- 全局变量 ----
+let playerHp = 100;
+let ocHp = 100;
+let gold = 50;
+let inventory = {};       // 全局背包 { itemId: count }
+let potIngredients = [];  // 锅里食材
+let lastCookedDish = null;
+let isFishing = false;
+
+// ---- 图片路径（改成你的实际文件名） ----
+const IMAGES = {
+    fishingBg: 'fishing_bg.png',   // 钓鱼背景图
+    cookingBg: 'kitchen_bg.png',   // 厨房背景图
+    shopBg: '',      // 商店背景图
+};
+
+// ---- 所有可获取的物品定义 ----
+const ALL_ITEMS = {
+    // 钓鱼食材
+    fish1:   { id: 'fish1',   name: '鲫鱼',   icon: '🐟', type: 'food' },
+    fish2:   { id: 'fish2',   name: '鲤鱼',   icon: '🐠', type: 'food' },
+    shrimp:  { id: 'shrimp',  name: '河虾',   icon: '🦐', type: 'food' },
+    crab:    { id: 'crab',    name: '螃蟹',   icon: '🦀', type: 'food' },
+    seaweed: { id: 'seaweed', name: '海带',   icon: '🌿', type: 'food' },
+    treasure:{ id: 'treasure',name: '珍珠贝', icon: '🐚', type: 'food' },
+    boot:    { id: 'boot',    name: '破靴子', icon: '👢', type: 'trash' },
+    can:     { id: 'can',     name: '易拉罐', icon: '🥫', type: 'trash' },
+    // 商店新增食材
+    taro:    { id: 'taro',    name: '芋圆',   icon: '🟤', type: 'food' },
+    chili:   { id: 'chili',   name: '辣椒',   icon: '🌶️', type: 'food' },
+    perilla: { id: 'perilla', name: '苏子叶', icon: '🌿', type: 'food' },
+    watermelon: { id: 'watermelon', name: '西瓜', icon: '🍉', type: 'food' },
+    sesame:  { id: 'sesame',  name: '麻酱',   icon: '🫘', type: 'food' },
+    onion:   { id: 'onion',   name: '葱',     icon: '🧅', type: 'food' },
+};
+
+// ---- 钓鱼物品池（含权重） ----
+const FISH_POOL = [
+    { id: 'fish1',   weight: 30 },
+    { id: 'fish2',   weight: 25 },
+    { id: 'shrimp',  weight: 20 },
+    { id: 'crab',    weight: 15 },
+    { id: 'seaweed', weight: 10 },
+    { id: 'boot',    weight: 15 },
+    { id: 'can',     weight: 15 },
+    { id: 'treasure',weight: 5 },
+];
+
+// ---- 食谱 ----
+const RECIPES = [
+    { id: 'fish_soup',       name: '鱼汤',       icon: '🍲', ingredients: ['fish1','fish2'],      effectPlayer: 15, effectOc: 10 },
+    { id: 'shrimp_stir',     name: '炒河虾',     icon: '🍤', ingredients: ['shrimp'],            effectPlayer: 10, effectOc: 8 },
+    { id: 'crab_steam',      name: '清蒸螃蟹',   icon: '🦀', ingredients: ['crab'],              effectPlayer: 12, effectOc: 10 },
+    { id: 'seaweed_soup',    name: '海带汤',     icon: '🥣', ingredients: ['seaweed'],           effectPlayer: 8,  effectOc: 5 },
+    { id: 'mixed_seafood',   name: '海鲜大杂烩', icon: '🥘', ingredients: ['fish1','shrimp','crab'], effectPlayer: 25, effectOc: 20 },
+    { id: 'pearl_tea',       name: '珍珠奶茶',   icon: '🧋', ingredients: ['treasure'],          effectPlayer: 5,  effectOc: 3 },
+    { id: 'trash_soup',      name: '黑暗料理',   icon: '💀', ingredients: ['boot','can'],         effectPlayer: -20, effectOc: -10 },
+    // 新食谱
+    { id: 'sour_spicy_taro', name: '酸辣芋圆',   icon: '🍜', ingredients: ['chili','taro'],       effectPlayer: 10, effectOc: 8 },
+    { id: 'perilla_salad',   name: '拌苏子叶',   icon: '🥗', ingredients: ['chili','perilla'],    effectPlayer: 8,  effectOc: 6 },
+    { id: 'watermelon_perilla', name: '西瓜叶',  icon: '🍉', ingredients: ['watermelon','perilla'], effectPlayer: 5, effectOc: -5 },
+    { id: 'sesame_watermelon',  name: '麻酱西瓜', icon: '🍉', ingredients: ['watermelon','sesame'], effectPlayer: -10, effectOc: -8 },
+    { id: 'sesame_onion',    name: '麻酱葱',     icon: '🧅', ingredients: ['sesame','onion'],     effectPlayer: -999, effectOc: -20 },
+    { id: 'sesame_taro',     name: '麻酱芋圆',   icon: '🟤', ingredients: ['sesame','taro'],      effectPlayer: -999, effectOc: -15 },
+    { id: 'fish_perilla_soup', name: '鱼苏汤',   icon: '🐟', ingredients: ['fish1','perilla'],    effectPlayer: 18, effectOc: 12 },
+    { id: 'spicy_fish',      name: '辣味鱼',     icon: '🐠', ingredients: ['chili','fish2'],      effectPlayer: 12, effectOc: 10 },
+    { id: 'watermelon_shrimp', name: '西瓜虾仁', icon: '🦐', ingredients: ['watermelon','shrimp'], effectPlayer: -5, effectOc: -3 },
+];
+
+// ---- 商店商品 ----
+const SHOP_ITEMS = [
+    { id: 'fish1',   price: 15 },
+    { id: 'fish2',   price: 20 },
+    { id: 'shrimp',  price: 25 },
+    { id: 'crab',    price: 30 },
+    { id: 'seaweed', price: 10 },
+    { id: 'treasure',price: 50 },
+    { id: 'taro',    price: 12 },
+    { id: 'chili',   price: 8 },
+    { id: 'perilla', price: 6 },
+    { id: 'watermelon', price: 18 },
+    { id: 'sesame',  price: 15 },
+    { id: 'onion',   price: 5 },
+];
+
+// ---- 回收价格 ----
+const SELL_PRICES = {
+    fish1: 8, fish2: 10, shrimp: 12, crab: 15, seaweed: 5, treasure: 25,
+    boot: 2, can: 2,
+    taro: 6, chili: 4, perilla: 3, watermelon: 9, sesame: 7, onion: 2,
+};
+
+// ---- 钓鱼参数 ----
+const CAST_MIN_TIME = 1500;
+const CAST_MAX_TIME = 4000;
+const EMPTY_CHANCE = 0.08;
+
+// ================================================================
+// 🛠️ 核心逻辑（不用改）
+// ================================================================
+
+// ---- 工具函数 ----
+function getItemInfo(id) { return ALL_ITEMS[id] || { id, name: id, icon: '❓', type: 'unknown' }; }
+
+// ---- 血量 ----
+function updateHpUI() {
+    playerHp = Math.max(0, Math.min(100, playerHp));
+    ocHp = Math.max(1, Math.min(100, ocHp));
+    document.getElementById('playerHpFill').style.width = playerHp + '%';
+    document.getElementById('playerHpText').textContent = playerHp;
+    document.getElementById('ocHpFill').style.width = ocHp + '%';
+    document.getElementById('ocHpText').textContent = ocHp;
+}
+
+// ---- 金币 ----
+function updateGoldUI() {
+    document.getElementById('goldBar').textContent = `💰 ${gold}`;
+    const shopGold = document.getElementById('shopGoldDisplay');
+    if (shopGold) shopGold.textContent = `💰 金币：${gold}`;
+}
+
+// ---- 背包操作 ----
+function addToInventory(itemId, count = 1) {
+    if (!inventory[itemId]) inventory[itemId] = 0;
+    inventory[itemId] += count;
+}
+function removeFromInventory(itemId, count = 1) {
+    if (!inventory[itemId] || inventory[itemId] < count) return false;
+    inventory[itemId] -= count;
+    if (inventory[itemId] <= 0) delete inventory[itemId];
+    return true;
+}
+function getInventoryList() {
+    const list = [];
+    for (const id in inventory) {
+        if (inventory[id] > 0) {
+            const info = getItemInfo(id);
+            list.push({ ...info, count: inventory[id] });
+        }
+    }
+    return list;
+}
+
+// ---- 背包弹窗 ----
+function showBackpack() {
+    const list = document.getElementById('backpackList');
+    list.innerHTML = '';
+    const items = getInventoryList();
+    if (items.length === 0) {
+        list.innerHTML = '<div style="color:rgba(255,255,255,0.4);">背包空空</div>';
+    } else {
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'backpack-entry';
+            div.innerHTML = `<span>${item.icon} ${item.name}</span><span>×${item.count}</span>`;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('backpackPopup').classList.add('active');
+}
+function hideBackpack() {
+    document.getElementById('backpackPopup').classList.remove('active');
+}
+
+// ---- 钓鱼 ----
+function castLine() {
+    if (isFishing) return;
+    isFishing = true;
+    document.getElementById('castBtn').disabled = true;
+    document.getElementById('fishStatus').textContent = '🎣 钓鱼中…';
+    document.getElementById('fishResult').textContent = '耐心等待…';
+    const waitTime = Math.random() * (CAST_MAX_TIME - CAST_MIN_TIME) + CAST_MIN_TIME;
+    setTimeout(() => {
+        document.getElementById('fishStatus').textContent = '❗ 有动静！';
+        setTimeout(() => {
+            isFishing = false;
+            document.getElementById('castBtn').disabled = false;
+            if (Math.random() < EMPTY_CHANCE) {
+                document.getElementById('fishStatus').textContent = '😅 什么也没有…';
+                document.getElementById('fishResult').textContent = '再试一次吧';
+                return;
+            }
+            const pool = [];
+            FISH_POOL.forEach(f => { for (let i = 0; i < f.weight; i++) pool.push(f.id); });
+            const caughtId = pool[Math.floor(Math.random() * pool.length)];
+            const caught = getItemInfo(caughtId);
+            if (caught.type === 'trash') {
+                document.getElementById('fishStatus').textContent = `😤 钓到了 ${caught.icon} ${caught.name}！`;
+                document.getElementById('fishResult').textContent = '没什么用…丢回河里了';
+                return;
+            }
+            addToInventory(caughtId);
+            document.getElementById('fishStatus').textContent = `🎉 钓到了 ${caught.icon} ${caught.name}！`;
+            document.getElementById('fishResult').textContent = `已收入背包 (现有 ${inventory[caughtId]} 份)`;
+        }, 600);
+    }, waitTime);
+}
+
+// ---- 做饭 ----
+function renderCookingBackpack() {
+    const container = document.getElementById('cookingBackpack');
+    container.innerHTML = '';
+    const items = getInventoryList();
+    if (items.length === 0) {
+        container.innerHTML = '<span style="color:rgba(255,255,255,0.4);">背包空空，先去钓鱼或购买食材吧</span>';
+        return;
+    }
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'backpack-item';
+        if (potIngredients.includes(item.id)) div.classList.add('selected');
+        div.textContent = `${item.icon} ${item.name} ×${item.count}`;
+        div.addEventListener('click', () => togglePotIngredient(item.id));
+        container.appendChild(div);
+    });
+}
+function togglePotIngredient(itemId) {
+    const idx = potIngredients.indexOf(itemId);
+    if (idx >= 0) {
+        potIngredients.splice(idx, 1);
+    } else {
+        if (!inventory[itemId] || inventory[itemId] <= 0) return;
+        potIngredients.push(itemId);
+    }
+    renderCookingBackpack();
+    renderPot();
+}
+function renderPot() {
+    const pot = document.getElementById('cookingPot');
+    pot.innerHTML = '';
+    if (potIngredients.length === 0) {
+        pot.innerHTML = '<span style="color:rgba(255,255,255,0.4);">🫕 锅是空的</span>';
+        return;
+    }
+    potIngredients.forEach(id => {
+        const item = getItemInfo(id);
+        const span = document.createElement('span');
+        span.className = 'pot-ingredient';
+        span.textContent = `${item.icon} ${item.name}`;
+        pot.appendChild(span);
+    });
+}
+function cook() {
+    if (potIngredients.length === 0) {
+        document.getElementById('cookResult').textContent = '锅里什么都没有…';
+        return;
+    }
+    let matchedRecipe = null;
+    for (const recipe of RECIPES) {
+        const needed = [...recipe.ingredients];
+        const have = [...potIngredients];
+        let match = true;
+        for (const ing of needed) {
+            const idx = have.indexOf(ing);
+            if (idx === -1) { match = false; break; }
+            have.splice(idx, 1);
+        }
+        if (match) { matchedRecipe = recipe; break; }
+    }
+    if (!matchedRecipe) {
+        matchedRecipe = { id: 'failed', name: '不明物体', icon: '💩', ingredients: potIngredients, effectPlayer: -10, effectOc: -5 };
+    }
+    for (const ingId of potIngredients) removeFromInventory(ingId);
+    potIngredients = [];
+    lastCookedDish = matchedRecipe;
+    document.getElementById('cookResult').textContent = `🍽️ 做好了：${matchedRecipe.icon} ${matchedRecipe.name}`;
+    renderCookingBackpack();
+    renderPot();
+}
+function eatSelf() {
+    if (!lastCookedDish) { document.getElementById('cookResult').textContent = '还没有做好的菜呢'; return; }
+    const effect = lastCookedDish.effectPlayer;
+    playerHp += effect;
+    document.getElementById('cookResult').textContent = effect > 0
+        ? `😋 你吃了${lastCookedDish.name}，恢复了${effect}点生命！`
+        : `😫 你吃了${lastCookedDish.name}，损失了${Math.abs(effect)}点生命！`;
+    if (playerHp <= 0) { playerHp = 30; document.getElementById('cookResult').textContent += ' 💊 颜旋光急忙赶来抢救了你！'; }
+    lastCookedDish = null;
+    updateHpUI();
+}
+function feedOc() {
+    if (!lastCookedDish) { document.getElementById('cookResult').textContent = '还没有做好的菜呢'; return; }
+    const effect = lastCookedDish.effectOc;
+    ocHp += effect;
+    document.getElementById('cookResult').textContent = effect > 0
+        ? `😊 你喂颜旋光吃了${lastCookedDish.name}，他恢复了${effect}点生命`
+        : `颜旋光吃了${lastCookedDish.name}，损失了${Math.abs(effect)}点生命，不过对方似乎并不是很在意`;
+    lastCookedDish = null;
+    updateHpUI();
+}
+
+// ---- 商店 ----
+function renderShop(tab) {
+    const grid = document.getElementById('shopGrid');
+    grid.innerHTML = '';
+    document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.shop-tab[data-tab="${tab}"]`).classList.add('active');
+    if (tab === 'buy') {
+        SHOP_ITEMS.forEach(item => {
+            const info = getItemInfo(item.id);
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <div class="shop-item-info">
+                    <span class="shop-item-icon">${info.icon}</span>
+                    <div>
+                        <div class="shop-item-name">${info.name}</div>
+                        <div class="shop-item-price">💰 ${item.price}</div>
+                    </div>
+                </div>
+                <button class="shop-buy-btn" data-id="${item.id}" data-price="${item.price}">购买</button>
+            `;
+            grid.appendChild(div);
+        });
+        grid.querySelectorAll('.shop-buy-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const price = parseInt(this.dataset.price);
+                if (gold < price) { alert('💰 金币不够！'); return; }
+                gold -= price;
+                addToInventory(id);
+                updateGoldUI();
+                renderShop('buy');
+                if (document.getElementById('cookingPage').classList.contains('active')) renderCookingBackpack();
+            });
+        });
+    } else {
+        const items = getInventoryList();
+        if (items.length === 0) {
+            grid.innerHTML = '<div style="color:rgba(255,255,255,0.4);padding:20px;">背包里没有可以出售的东西</div>';
+            return;
+        }
+        items.forEach(item => {
+            const sellPrice = SELL_PRICES[item.id] || 0;
+            if (sellPrice <= 0) return;
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <div class="shop-item-info">
+                    <span class="shop-item-icon">${item.icon}</span>
+                    <div>
+                        <div class="shop-item-name">${item.name}</div>
+                        <div class="shop-item-price">💰 ${sellPrice}/个</div>
+                    </div>
+                </div>
+                <div>
+                    <span style="margin-right:8px;color:rgba(255,255,255,0.6);">×${item.count}</span>
+                    <button class="shop-sell-btn" data-id="${item.id}" data-price="${sellPrice}">出售</button>
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+        grid.querySelectorAll('.shop-sell-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const price = parseInt(this.dataset.price);
+                if (!inventory[id] || inventory[id] <= 0) return;
+                removeFromInventory(id);
+                gold += price;
+                updateGoldUI();
+                renderShop('sell');
+                if (document.getElementById('cookingPage').classList.contains('active')) renderCookingBackpack();
+            });
+        });
+    }
+}
+
+// ---- 页面切换 ----
+function openFishing() {
+    document.getElementById('fishingPage').classList.add('active');
+    document.getElementById('fishStatus').textContent = '🎣 准备钓鱼';
+    document.getElementById('fishResult').textContent = '点击抛竿开始';
+}
+function closeFishing() { document.getElementById('fishingPage').classList.remove('active'); }
+function openCooking() {
+    document.getElementById('cookingPage').classList.add('active');
+    renderCookingBackpack(); renderPot();
+    document.getElementById('cookResult').textContent = '';
+}
+function closeCooking() { document.getElementById('cookingPage').classList.remove('active'); }
+function openShop() {
+    document.getElementById('shopPage').classList.add('active');
+    renderShop('buy'); updateGoldUI();
+}
+function closeShop() { document.getElementById('shopPage').classList.remove('active'); }
+
+// ---- 设置背景图 ----
+if (IMAGES.fishingBg) document.getElementById('fishingBg').src = IMAGES.fishingBg;
+if (IMAGES.cookingBg) document.getElementById('cookingBg').src = IMAGES.cookingBg;
+if (IMAGES.shopBg) document.getElementById('shopBg').src = IMAGES.shopBg;
+
+// ---- 绑定事件 ----
+document.getElementById('castBtn').addEventListener('click', castLine);
+document.getElementById('showFishBackpackBtn').addEventListener('click', showBackpack);
+document.getElementById('closeBackpackBtn').addEventListener('click', hideBackpack);
+document.getElementById('fishingToHomeBtn').addEventListener('click', closeFishing);
+document.getElementById('cookBtn').addEventListener('click', cook);
+document.getElementById('eatSelfBtn').addEventListener('click', eatSelf);
+document.getElementById('feedOcBtn').addEventListener('click', feedOc);
+document.getElementById('cookingToHomeBtn').addEventListener('click', closeCooking);
+document.querySelectorAll('.shop-tab').forEach(tab => {
+    tab.addEventListener('click', function() { renderShop(this.dataset.tab); });
+});
+document.getElementById('shopToHomeBtn').addEventListener('click', closeShop);
+
+// ---- 暴露函数供首页按钮调用 ----
+window.openFishing = openFishing;
+window.openCooking = openCooking;
+window.openShop = openShop;
+
+// ---- 初始化 ----
+updateHpUI();
+updateGoldUI();
+
+// 如果你的首页已有按钮，取消注释下面三行：
+document.getElementById('fishingBtn').addEventListener('click', openFishing);
+document.getElementById('cookingBtn').addEventListener('click', openCooking);
+document.getElementById('shopBtn').addEventListener('click', openShop);
+
+</script>
+<style>
+/* 打劫专用弹窗样式 */
+.rob-dialog-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1999;
+}
+.rob-dialog-overlay.active { display: flex; }
+
+.rob-dialog-card {
+    background: #fffcf8;
+    border-radius: 28px;
+    padding: 24px 28px 28px;
+    max-width: 360px;
+    width: 85%;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    animation: robPopIn 0.25s ease-out;
+}
+@keyframes robPopIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.rob-dialog-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 12px;
+    border: 4px solid #f0ded0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    display: block;
+    background: #dcc4b8;
+}
+
+.rob-dialog-speaker {
+    font-size: 16px;
+    font-weight: 700;
+    color: #3a2822;
+    margin-bottom: 6px;
+}
+
+.rob-dialog-text {
+    font-size: 17px;
+    color: #3a2822;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    background: #faf3ec;
+    border-radius: 20px;
+    padding: 14px 18px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+    white-space: pre-wrap;
+}
+
+.rob-dialog-close-btn {
+    background: #8f7163;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.rob-dialog-close-btn:hover { background: #7a5c4e; }
+
+
+#robBtn:active { transform: scale(0.95); }
+</style>
+
+<!-- 打劫弹窗 -->
+<div class="rob-dialog-overlay" id="robDialogOverlay">
+    <div class="rob-dialog-card">
+        <img class="rob-dialog-avatar" id="robDialogAvatar" src="" alt="颜旋光">
+        <div class="rob-dialog-speaker" id="robDialogSpeaker">颜旋光</div>
+        <div class="rob-dialog-text" id="robDialogText">……</div>
+        <button class="rob-dialog-close-btn" id="robDialogCloseBtn">知道了</button>
+    </div>
+</div>
+
+<script>
+// ================================================================
+// 🎮 打劫功能（独立模块，不依赖其他函数）
+// ================================================================
+
+(function() {
+    // ---- 配置 ----
+    const OC_NAME = '颜旋光';
+    const OC_AVATAR = ''; // 如果有颜旋光的大头照，填路径，如 'oc_head.png'
+
+    // ---- DOM 引用 ----
+    const overlay = document.getElementById('robDialogOverlay');
+    const avatar = document.getElementById('robDialogAvatar');
+    const speaker = document.getElementById('robDialogSpeaker');
+    const text = document.getElementById('robDialogText');
+    const closeBtn = document.getElementById('robDialogCloseBtn');
+
+    // 设置头像
+    if (OC_AVATAR && OC_AVATAR.trim() !== 'oc_head.png') {
+        avatar.src = OC_AVATAR;
+        avatar.style.display = 'block';
+    } else {
+        avatar.style.display = 'none';
+    }
+
+    // ---- 显示弹窗 ----
+    function showRobDialog(message) {
+        speaker.textContent = OC_NAME;
+        text.textContent = message;
+        overlay.classList.add('active');
+    }
+
+    // ---- 关闭弹窗 ----
+    function closeRobDialog() {
+        overlay.classList.remove('active');
+    }
+
+    closeBtn.addEventListener('click', closeRobDialog);
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeRobDialog();
+    });
+
+    // ---- 打劫逻辑 ----
+    window.robOc = function() {
+        // 随机给 200~500 金币
+        const reward = Math.floor(Math.random() * 301) + 200;
+        
+        // 增加金币（假设你的金币变量叫 gold，且有 updateGoldUI 函数）
+        if (typeof gold !== 'undefined') {
+            gold += reward;
+            if (typeof updateGoldUI === 'function') {
+                updateGoldUI();
+            }
+        }
+
+        // 随机台词
+        const dialogues = [
+            `「想买什么？这里是 ${reward} 块钱，去买喜欢的吧」`,
+            `「好啦好啦，别闹了。给你给你，${reward} 块，记得按时吃饭。」`,
+            `「当然愿意给你呀，我赚的钱不就是给你花的吗？」`,
+            `「真是拿你没办法…喏，${reward} 块」`,
+            `「这些钱是会变成漂亮的小裙子还是美味的食物呢?」`,
+        ];
+        const msg = dialogues[Math.floor(Math.random() * dialogues.length)];
+        showRobDialog(msg);
+    };
+
+    // ---- 绑定按钮 ----
+    // 等待 DOM 加载完成
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('robBtn');
+        if (btn) {
+            btn.addEventListener('click', window.robOc);
+        }
+    });
+})();
+</script>
+<!-- ===== 打劫模块（极简可靠版） ===== -->
+
+<script>
+(function() {
+    // 确保页面加载完成后绑定
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('robBtn');
+        if (!btn) {
+            console.error('打劫按钮未找到！');
+            return;
+        }
+        btn.onclick = function() {
+            // 获取金币变量（从 window 上取）
+            var gold = window.gold || 0;
+            var reward = Math.floor(Math.random() * 301) + 200;
+            gold += reward;
+            window.gold = gold;
+            
+            // 尝试更新金币显示
+            if (typeof window.updateGoldUI === 'function') {
+                window.updateGoldUI();
+            }
+            
+            // 弹出对话
+            var dialogues = [
+                '「想买什么？这里是 ' + reward + ' 块钱，去买喜欢的吧」',
+                '「好啦好啦，别闹了。给你给你，' + reward + ' 块，记得按时吃饭。」',
+                '「当然愿意给你呀，我赚的钱不就是给你花的吗？」',
+                '「真是拿你没办法…喏，' + reward + ' 块」',
+                '「这些钱是会变成漂亮的小裙子还是美味的食物呢?」'
+            ];
+            var msg = dialogues[Math.floor(Math.random() * dialogues.length)];
+            alert(msg);
+        };
+    });
+})();
 </script>
 </body>
 </html>
