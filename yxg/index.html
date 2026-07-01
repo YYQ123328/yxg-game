@@ -204,10 +204,12 @@
     <button class="btn" id="shopBtn">🏪 商店</button>
     <button class="btn" id="robBtn">🫰 打劫</button>
     <button class="btn" id="farmingBtn">🌾 种田</button>
+    <button class="btn" id="mapBtn">🗺️ 地图</button>
+    <button class="btn" id="petBtn">🐾 宠物</button>
     <!-- ====== 心情反馈区 ====== -->
     <div class="mood-text" id="moodDisplay">轻轻戳一下看看反应～</div>
 
-    <div class="footer-note">❤️ 为你和OC制作</div>
+    <div class="footer-note">❤️ 雪雫和颜旋光的世界</div>
 </div>
 
 <script>
@@ -1501,12 +1503,12 @@ document.getElementById('wardrobeBtn').addEventListener('click', openWardrobe);
 <!-- ===== 血量条 ===== -->
 <div class="hp-bar-container" id="hpBar">
     <div class="hp-bar hp-player">
-        <span>🧑 你</span>
+        <span>❄ 你</span>
         <div class="hp-fill"><div class="hp-fill-inner" id="playerHpFill" style="width:100%"></div></div>
         <span id="playerHpText">100</span>
     </div>
     <div class="hp-bar hp-oc">
-        <span>🐱 颜旋光</span>
+        <span>🐍 颜旋光</span>
         <div class="hp-fill"><div class="hp-fill-inner" id="ocHpFill" style="width:100%"></div></div>
         <span id="ocHpText">100</span>
     </div>
@@ -2614,6 +2616,785 @@ window.openFarming = openFarming;
 document.getElementById('farmingBtn').addEventListener('click', openFarming);
 </script>
 
+</script>
+<!-- ====== 大地图模块（滑动版） ====== -->
+<style>
+#mapPage {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 993;
+    background: #1a2e1a;
+}
+#mapPage.active { display: flex; }
+
+.map-content {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 地图背景图保持原尺寸 */
+.map-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1920px;
+    height: 1080px;
+    object-fit: none;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* 地点按钮容器 */
+.map-locations {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1920px;
+    height: 1080px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* 单个地点按钮 */
+.location-btn {
+    position: absolute;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 16px;
+    padding: 10px 16px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 80px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.location-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.location-btn:active {
+    transform: translateY(0);
+}
+
+.location-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 4px;
+}
+.location-name {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* 返回按钮固定在视口 */
+.map-back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 2;
+    background: rgba(143,113,99,0.85);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.map-back-btn:hover {
+    background: #7a5c4e;
+    transform: translateY(-2px);
+}
+
+/* 地图标题固定在视口 */
+.map-title {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.3);
+    padding: 8px 24px;
+    border-radius: 999px;
+    backdrop-filter: blur(4px);
+}
+
+/* 滑动提示（手机显示） */
+.map-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 20px;
+    border-radius: 999px;
+    backdrop-filter: blur(4px);
+    animation: hintPulse 2s infinite;
+}
+@keyframes hintPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+@media (min-width: 1025px) {
+    .map-hint { display: none; }
+}
+</style>
+
+<div class="full-page" id="mapPage">
+    <div class="map-content">
+        <!-- 地图背景图 -->
+        <img class="map-bg" id="mapBg" src="" alt="大地图">
+
+        <!-- 地点按钮 -->
+        <div class="map-locations">
+            <!-- 家（左上） -->
+            <button class="location-btn" style="top:15%;left:15%;" data-target="home">
+                <span class="location-icon">🏠</span>
+                <span class="location-name">家</span>
+            </button>
+
+            <!-- 湖边（右上） -->
+            <button class="location-btn" style="top:12%;right:18%;" data-target="lake">
+                <span class="location-icon">🎣</span>
+                <span class="location-name">湖边</span>
+            </button>
+
+            <!-- 古堡（左下） -->
+            <button class="location-btn" style="bottom:20%;left:12%;" data-target="castle">
+                <span class="location-icon">🏰</span>
+                <span class="location-name">古堡</span>
+            </button>
+
+            <!-- 山（右下） -->
+            <button class="location-btn" style="bottom:15%;right:15%;" data-target="mountain">
+                <span class="location-icon">⛰️</span>
+                <span class="location-name">山</span>
+            </button>
+
+            <!-- 森林（中间偏下） -->
+            <button class="location-btn" style="bottom:35%;left:42%;" data-target="forest">
+                <span class="location-icon">🌲</span>
+                <span class="location-name">森林</span>
+            </button>
+
+            <!-- 小镇（中间偏上） -->
+            <button class="location-btn" style="top:33%;left:43%;" data-target="town">
+                <span class="location-icon">🏘️</span>
+                <span class="location-name">小镇</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 固定在视口的元素 -->
+    <div class="map-title">🗺️ 世界地图</div>
+    <button class="map-back-btn" id="mapBackBtn">🏠 返回首页</button>
+    <div class="map-hint">← 滑动查看全图 →</div>
+</div>
+
+<script>
+// ================================================================
+// 🎮 大地图配置
+// ================================================================
+
+const MAP_CONFIG = {
+    // 地图背景图（1920×1080）
+    backgroundImage: 'world_map.png',  // 例如 'world_map.png'
+
+    // 地点配置
+    locations: {
+        home: {
+            name: '家',
+            icon: '🏠',
+            action: function() {
+                closeMap();
+                if (typeof openRoom === 'function') {
+                    openRoom();
+                } else {
+                    alert('🏠 回到温暖的家～');
+                }
+            }
+        },
+        lake: {
+            name: '湖边',
+            icon: '🎣',
+            action: function() {
+                closeMap();
+                if (typeof openFishing === 'function') {
+                    openFishing();
+                } else {
+                    alert('🎣 来到湖边，准备钓鱼～');
+                }
+            }
+        },
+        castle: {
+            name: '古堡',
+            icon: '🏰',
+            action: function() {
+                closeMap();
+                alert('🏰 古堡深处似乎藏着什么秘密…（待开放）');
+            }
+        },
+        mountain: {
+            name: '山',
+            icon: '⛰️',
+            action: function() {
+                closeMap();
+                if (typeof openFarming === 'function') {
+                    openFarming();
+                } else {
+                    alert('⛰️ 山上空气真好，适合种田～');
+                }
+            }
+        },
+        forest: {
+            name: '森林',
+            icon: '🌲',
+            action: function() {
+                closeMap();
+                alert('🌲 森林里传来窸窸窣窣的声音…（待开放）');
+            }
+        },
+        town: {
+            name: '小镇',
+            icon: '🏘️',
+            action: function() {
+                closeMap();
+                if (typeof openShop === 'function') {
+                    openShop();
+                } else {
+                    alert('🏘️ 小镇集市热闹非凡～');
+                }
+            }
+        },
+    },
+};
+
+// ================================================================
+// 🛠️ 逻辑（不用改）
+// ================================================================
+
+// 设置背景图
+if (MAP_CONFIG.backgroundImage) {
+    document.getElementById('mapBg').src = MAP_CONFIG.backgroundImage;
+}
+
+// 绑定地点按钮
+document.querySelectorAll('.location-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const target = this.dataset.target;
+        const location = MAP_CONFIG.locations[target];
+        if (location && location.action) {
+            location.action();
+        }
+    });
+});
+
+// 打开/关闭地图
+function openMap() {
+    document.getElementById('mapPage').classList.add('active');
+}
+function closeMap() {
+    document.getElementById('mapPage').classList.remove('active');
+}
+
+document.getElementById('mapBackBtn').addEventListener('click', closeMap);
+
+// 暴露函数
+window.openMap = openMap;
+
+// 如果你的首页有“🗺️ 地图”按钮，取消注释下面这行：
+document.getElementById('mapBtn').addEventListener('click', openMap);
+</script>
+</script>
+
+<!-- ====== 宠物模块 ====== -->
+<style>
+/* 宠物页面 */
+#petPage {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 992;
+    background: #f5e6d3;
+}
+#petPage.active { display: flex; }
+
+.pet-content {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #e8d8c5;  /* 米白色背景 */
+    overflow: hidden;
+}
+
+/* 中间层面板 */
+.pet-panel {
+    background: rgba(255, 248, 240, 0.85);
+    border-radius: 32px;
+    padding: 30px 40px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    backdrop-filter: blur(4px);
+    max-width: 580px;
+    width: 90%;
+    margin: 0 auto;
+    z-index: 1;
+    position: relative;
+}
+
+/* 宠物展示区 */
+.pet-display {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+/* 单个宠物卡片 */
+.pet-card {
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.pet-card:active {
+    transform: scale(0.95);
+}
+
+/* 宠物精灵图（改大） */
+.pet-sprite {
+    width: 128px;
+    height: 128px;
+    image-rendering: pixelated;
+    display: block;
+    margin: 0 auto;
+    transition: transform 0.05s;
+}
+
+/* 宠物名字 */
+.pet-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #3a2822;
+    margin-top: 8px;
+}
+
+/* 宠物状态栏 */
+.pet-stats {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 6px;
+    font-size: 13px;
+    color: #5a4035;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.stat-icon { font-size: 14px; }
+.stat-value { font-weight: 600; }
+
+/* 宠物心情/状态文字 */
+.pet-mood {
+    font-size: 14px;
+    color: #8f7163;
+    margin-top: 4px;
+    min-height: 20px;
+    font-style: italic;
+}
+
+/* 互动按钮区 */
+.pet-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+.pet-action-btn {
+    background: rgba(255,248,240,0.9);
+    border: 2px solid #dcc4b8;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #3a2822;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.pet-action-btn:hover {
+    background: #fff8f0;
+    border-color: #b48d7a;
+    transform: translateY(-2px);
+}
+.pet-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 返回按钮 */
+.pet-back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(143,113,99,0.85);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.pet-back-btn:hover { background: #7a5c4e; }
+
+/* 宠物动画关键帧 */
+@keyframes petJump {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-12px); }
+    50% { transform: translateY(-6px); }
+    75% { transform: translateY(-12px); }
+}
+@keyframes petWiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+}
+@keyframes petSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.pet-animate-jump { animation: petJump 0.4s ease; }
+.pet-animate-wiggle { animation: petWiggle 0.3s ease; }
+.pet-animate-spin { animation: petSpin 0.5s ease; }
+</style>
+
+<div class="full-page" id="petPage">
+    <div class="pet-content">
+        <!-- 中间层面板 -->
+        <div class="pet-panel">
+            <!-- 宠物展示区 -->
+            <div class="pet-display" id="petDisplay">
+                <!-- 颜泡泡 -->
+                <div class="pet-card" id="petYan" data-pet="yan">
+                    <img class="pet-sprite" id="spriteYan" src="" alt="颜泡泡">
+                    <div class="pet-name">颜泡泡 🫧</div>
+                    <div class="pet-stats">
+                        <span class="stat-item"><span class="stat-icon">🍖</span><span class="stat-value" id="yanHunger">80</span></span>
+                        <span class="stat-item"><span class="stat-icon">🛁</span><span class="stat-value" id="yanClean">80</span></span>
+                        <span class="stat-item"><span class="stat-icon">🎈</span><span class="stat-value" id="yanHappy">80</span></span>
+                    </div>
+                    <div class="pet-mood" id="yanMood">看起来很开心～</div>
+                </div>
+
+                <!-- 雪泡泡 -->
+                <div class="pet-card" id="petSnow" data-pet="snow">
+                    <img class="pet-sprite" id="spriteSnow" src="" alt="雪泡泡">
+                    <div class="pet-name">雪泡泡 ❄️</div>
+                    <div class="pet-stats">
+                        <span class="stat-item"><span class="stat-icon">🍖</span><span class="stat-value" id="snowHunger">80</span></span>
+                        <span class="stat-item"><span class="stat-icon">🛁</span><span class="stat-value" id="snowClean">80</span></span>
+                        <span class="stat-item"><span class="stat-icon">🎈</span><span class="stat-value" id="snowHappy">80</span></span>
+                    </div>
+                    <div class="pet-mood" id="snowMood">看起来很开心～</div>
+                </div>
+            </div>
+
+            <!-- 互动按钮 -->
+            <div class="pet-actions">
+                <button class="pet-action-btn" id="petFeedBtn">🍖 喂食</button>
+                <button class="pet-action-btn" id="petBathBtn">🛁 洗澡</button>
+                <button class="pet-action-btn" id="petPlayBtn">🎾 出去玩</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="pet-back-btn" id="petBackBtn">🏠 返回</button>
+</div>
+
+<script>
+// ================================================================
+// 🎮 宠物模块配置
+// ================================================================
+
+const PET_CONFIG = {
+    // 宠物精灵图（你画的像素图）
+    sprites: {
+        yan: 'yan_pet.png',   // 颜泡泡的图片，如 'yan_pet.png'
+        snow: 'snow_pet.png',  // 雪泡泡的图片，如 'snow_pet.png'
+    },
+
+    // 宠物初始状态
+    pets: {
+        yan: {
+            name: '颜泡泡',
+            icon: '🫧',
+            hunger: 80,
+            clean: 80,
+            happy: 80,
+            prefBath: true,
+            prefFood: false,
+        },
+        snow: {
+            name: '雪泡泡',
+            icon: '❄️',
+            hunger: 80,
+            clean: 80,
+            happy: 80,
+            prefBath: false,
+            prefFood: true,
+        },
+    },
+
+    // 互动效果
+    effects: {
+        feed: { hunger: 15, clean: -3, happy: 5 },
+        bath: { hunger: -2, clean: 20, happy: 8 },
+        play: { hunger: -5, clean: -5, happy: 20 },
+    },
+
+    // 状态自然衰减
+    decay: {
+        hunger: 0.005,
+        clean: 0.008,
+        happy: 0.003,
+    },
+
+    // 心情描述
+    moodDescriptions: {
+        veryLow: '看起来很糟糕…',
+        low: '有点不开心',
+        medium: '还行吧～',
+        high: '心情不错！',
+        veryHigh: '超级开心！✨',
+    },
+};
+
+// ================================================================
+// 🛠️ 宠物逻辑
+// ================================================================
+
+let selectedPet = null;
+let petAnimating = false;
+
+// ---- 初始化 ----
+function initPets() {
+    if (PET_CONFIG.sprites.yan) {
+        document.getElementById('spriteYan').src = PET_CONFIG.sprites.yan;
+    }
+    if (PET_CONFIG.sprites.snow) {
+        document.getElementById('spriteSnow').src = PET_CONFIG.sprites.snow;
+    }
+    updateAllPetUI();
+}
+
+// ---- 更新单个宠物UI ----
+function updatePetUI(petKey) {
+    const pet = PET_CONFIG.pets[petKey];
+    if (!pet) return;
+
+    pet.hunger = Math.max(0, Math.min(100, pet.hunger));
+    pet.clean = Math.max(0, Math.min(100, pet.clean));
+    pet.happy = Math.max(0, Math.min(100, pet.happy));
+
+    document.getElementById(`${petKey}Hunger`).textContent = Math.round(pet.hunger);
+    document.getElementById(`${petKey}Clean`).textContent = Math.round(pet.clean);
+    document.getElementById(`${petKey}Happy`).textContent = Math.round(pet.happy);
+
+    const avg = (pet.hunger + pet.clean + pet.happy) / 3;
+    let mood = '';
+    if (avg < 20) mood = PET_CONFIG.moodDescriptions.veryLow;
+    else if (avg < 40) mood = PET_CONFIG.moodDescriptions.low;
+    else if (avg < 60) mood = PET_CONFIG.moodDescriptions.medium;
+    else if (avg < 80) mood = PET_CONFIG.moodDescriptions.high;
+    else mood = PET_CONFIG.moodDescriptions.veryHigh;
+    document.getElementById(`${petKey}Mood`).textContent = mood;
+}
+
+function updateAllPetUI() {
+    updatePetUI('yan');
+    updatePetUI('snow');
+}
+
+// ---- 宠物动画 ----
+function animatePet(petKey, animClass) {
+    const sprite = document.getElementById(`sprite${petKey.charAt(0).toUpperCase() + petKey.slice(1)}`);
+    if (!sprite || petAnimating) return;
+    petAnimating = true;
+    sprite.classList.add(animClass);
+    setTimeout(() => {
+        sprite.classList.remove(animClass);
+        petAnimating = false;
+    }, 500);
+}
+
+// ---- 戳宠物 ----
+function pokePet(petKey) {
+    const pet = PET_CONFIG.pets[petKey];
+    if (!pet) return;
+
+    const anims = ['pet-animate-jump', 'pet-animate-wiggle', 'pet-animate-spin'];
+    const anim = anims[Math.floor(Math.random() * anims.length)];
+    animatePet(petKey, anim);
+
+    const lines = {
+        yan: [
+            '「唔…别戳我～」',
+            '颜泡泡抖了抖，换了个姿势。',
+            '「再戳我要生气了哦！」',
+            '颜泡泡眯起眼睛，看起来很享受。',
+        ],
+        snow: [
+            '「咕…？」雪泡泡歪了歪头。',
+            '雪泡泡蹭了蹭你的手。',
+            '「还要戳～」',
+            '雪泡泡打了个滚，露出肚皮。',
+        ],
+    };
+    const msg = lines[petKey][Math.floor(Math.random() * lines[petKey].length)];
+    
+    if (typeof showRobDialog === 'function') {
+        showRobDialog(msg);
+    } else {
+        alert(msg);
+    }
+
+    pet.happy = Math.min(100, pet.happy + 2);
+    updatePetUI(petKey);
+}
+
+// ---- 互动 ----
+function interact(action) {
+    if (!selectedPet) {
+        alert('先戳一下想互动的宠物吧！');
+        return;
+    }
+
+    const pet = PET_CONFIG.pets[selectedPet];
+    if (!pet) return;
+
+    const effect = PET_CONFIG.effects[action];
+    if (!effect) return;
+
+    pet.hunger += effect.hunger;
+    pet.clean += effect.clean;
+    pet.happy += effect.happy;
+
+    if (action === 'feed' && pet.prefFood) pet.happy += 5;
+    if (action === 'bath' && pet.prefBath) pet.happy += 5;
+
+    animatePet(selectedPet, 'pet-animate-jump');
+
+    const feedback = {
+        feed: {
+            yan: '颜泡泡吃了几口，看起来还行。',
+            snow: '雪泡泡开心地埋头大吃！🍽️',
+        },
+        bath: {
+            yan: '颜泡泡在水里扑腾，好开心的样子！',
+            snow: '雪泡泡被泡沫包围了，有点懵…',
+        },
+        play: {
+            yan: '颜泡泡追着蝴蝶跑来跑去。',
+            snow: '雪泡泡在草地上滚成了一个球。',
+        },
+    };
+    const msg = feedback[action][selectedPet] || '互动完成～';
+    
+    if (typeof showRobDialog === 'function') {
+        showRobDialog(msg);
+    } else {
+        alert(msg);
+    }
+
+    updatePetUI(selectedPet);
+
+    if (typeof addFavor === 'function') {
+        addFavor('feedSuccess');
+    }
+}
+
+// ---- 状态自然衰减 ----
+function decayPets() {
+    for (const key in PET_CONFIG.pets) {
+        const pet = PET_CONFIG.pets[key];
+        pet.hunger -= PET_CONFIG.decay.hunger;
+        pet.clean -= PET_CONFIG.decay.clean;
+        pet.happy -= PET_CONFIG.decay.happy;
+    }
+    updateAllPetUI();
+}
+
+// ---- 页面控制 ----
+function openPet() {
+    document.getElementById('petPage').classList.add('active');
+    selectedPet = null;
+    updateAllPetUI();
+    if (window.petDecayInterval) clearInterval(window.petDecayInterval);
+    window.petDecayInterval = setInterval(decayPets, 1000);
+}
+function closePet() {
+    document.getElementById('petPage').classList.remove('active');
+    if (window.petDecayInterval) {
+        clearInterval(window.petDecayInterval);
+        window.petDecayInterval = null;
+    }
+}
+
+// ---- 绑定事件 ----
+document.getElementById('petBackBtn').addEventListener('click', closePet);
+
+document.querySelectorAll('.pet-card').forEach(card => {
+    card.addEventListener('click', function() {
+        const petKey = this.dataset.pet;
+        selectedPet = petKey;
+        pokePet(petKey);
+    });
+});
+
+document.getElementById('petFeedBtn').addEventListener('click', () => interact('feed'));
+document.getElementById('petBathBtn').addEventListener('click', () => interact('bath'));
+document.getElementById('petPlayBtn').addEventListener('click', () => interact('play'));
+
+initPets();
+
+window.openPet = openPet;
+
+// 如果你的首页有“🐾 宠物”按钮，取消注释下面这行：
+document.getElementById('petBtn').addEventListener('click', openPet);
+</script>
 </script>
 </body>
 </html>
